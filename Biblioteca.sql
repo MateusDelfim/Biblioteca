@@ -237,3 +237,66 @@ INSERT INTO Emprestimo(ID_livro, ID_leitor, data_emprestimo, data_devolucao, Dat
 INSERT INTO Livro_Emprestimo(id_livro, id_emprestimo) VALUES
 ('12','3'),
 ('17','4');
+
+-- Consultas INNER-JOIN
+
+-- Apresenta os livros emprestados, leitores e funcionários
+SELECT 
+    L.titulo AS Livro, 
+    LE.nome AS Leitor, 
+    F.nome AS Funcionario, 
+    E.data_emprestimo AS DataEmprestimo, 
+    E.data_devolucao AS DataDevolucao
+FROM Emprestimo E
+INNER JOIN Livros L ON E.ID_livro = L.id_livro
+INNER JOIN Leitores LE ON E.ID_leitor = LE.id_leitor
+INNER JOIN Funcionarios F ON E.id_funcionario = F.id_funcionario;
+
+
+-- Apresenta Leitor,Livro,Status,data do inicio e fim
+SELECT 
+    LE.nome AS Leitor, 
+    L.titulo AS Livro, 
+    LT.status AS StatusLeitura, 
+    LT.data_inicio AS DataInicio, 
+    LT.data_fim AS DataFim
+FROM Leitura LT
+INNER JOIN Livros L ON LT.id_livro = L.id_livro
+INNER JOIN Leitores LE ON LT.id_leitor = LE.id_leitor;
+
+-- Livro com sua categoria e editora
+SELECT 
+    L.titulo AS Livro, 
+    C.nome AS Categoria, 
+    E.nome AS Editora
+FROM Livros L
+INNER JOIN Categoria C ON L.id_categoria = C.id_categoria
+INNER JOIN Editora E ON L.id_editora = E.id_editora;
+
+-- Funcionários que registraram 
+
+SELECT 
+    F.nome AS Funcionario, 
+    LE.nome AS Leitor, 
+    L.titulo AS Livro, 
+    LT.data_inicio AS DataInicio, 
+    LT.data_fim AS DataFim
+FROM Leitura LT
+INNER JOIN Funcionarios F ON LT.id_funcionario = F.id_funcionario
+INNER JOIN Leitores LE ON LT.id_leitor = LE.id_leitor
+INNER JOIN Livros L ON LT.id_livro = L.id_livro;
+
+-- Leitores que concluíram leituras
+
+SELECT 
+    LE.nome AS Leitor, 
+    L.titulo AS Livro, 
+    LT.data_inicio AS DataInicio, 
+    LT.data_fim AS DataFim, 
+    F.nome AS Funcionario
+FROM Leitura LT
+INNER JOIN Leitores LE ON LT.id_leitor = LE.id_leitor
+INNER JOIN Livros L ON LT.id_livro = L.id_livro
+INNER JOIN Funcionarios F ON LT.id_funcionario = F.id_funcionario
+WHERE LT.status = 'Concluída';
+
