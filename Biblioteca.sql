@@ -300,3 +300,59 @@ INNER JOIN Livros L ON LT.id_livro = L.id_livro
 INNER JOIN Funcionarios F ON LT.id_funcionario = F.id_funcionario
 WHERE LT.status = 'Concluída';
 
+-- CRIAÇÃO DE PROCESSOS ARMAZENADOS
+
+DELIMITER //
+
+CREATE PROCEDURE InserirLivro(
+    IN titulo VARCHAR(255),
+    IN autor VARCHAR(255),
+    IN ano_publicacao YEAR,
+    IN quantidade INT,
+    IN isbn VARCHAR(20),
+    IN id_categoria INT,
+    IN id_editora INT
+)
+BEGIN
+    INSERT INTO Livros (titulo, autor, ano_publicacao, quantidade, isbn, id_categoria, id_editora)
+    VALUES (titulo, autor, ano_publicacao, quantidade, isbn, id_categoria, id_editora);
+END //
+
+DELIMITER ;
+
+CALL InserirLivro(
+    'Doze semanas para mudar uma vida', 
+    'Augusto Cury', 
+    2012, 
+    7, 
+    '978-989-678-052-2', 
+    10, 
+    1
+);
+
+DELIMITER //
+
+DELIMITER //
+
+CREATE PROCEDURE InserirEmprestimo(
+    IN id_livro INT,
+    IN id_leitor INT,
+    IN id_funcionario INT,
+    IN data_emprestimo DATE,
+    IN data_devolucao DATE,
+    IN status ENUM('Emprestado', 'Devolvido', 'Atrasado')
+)
+BEGIN
+    INSERT INTO Emprestimo (id_livro, id_leitor, id_funcionario, data_emprestimo, data_devolucao, status)
+    VALUES (id_livro, id_leitor, id_funcionario, data_emprestimo, data_devolucao, status);
+END //
+
+DELIMITER ;
+
+CALL InserirEmprestimo(3, 2, 1, '2024-11-30', '2024-12-15', 'Emprestado');
+
+
+
+
+
+
