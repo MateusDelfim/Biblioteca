@@ -64,7 +64,7 @@ CREATE TABLE Leitura (
     status ENUM('Disponível', 'Emprestado', 'Reservado') DEFAULT 'Disponível', 
     FOREIGN KEY (id_leitor) REFERENCES Leitores(id_leitor),
     FOREIGN KEY (id_livro) REFERENCES Livros(id_livro),
-    FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+    FOREIGN KEY (id_funcionario) REFERENCES Funcionario(id_funcionario)
 );
 
 -- Criando a tabela de Empréstimos
@@ -76,7 +76,7 @@ CREATE TABLE Emprestimo (
     data_devolucao DATE,
     Data_devolução_real Date,
     id_funcionario INT,
-     FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario),
+     FOREIGN KEY (id_funcionario) REFERENCES Funcionario(id_funcionario),
       FOREIGN KEY (id_livro) REFERENCES Livros(id_livro),
     FOREIGN KEY (id_leitor) REFERENCES Leitores(id_leitor)
 );
@@ -99,7 +99,7 @@ SELECT * FROM Editora;
 
 SELECT * FROM Leitores; 
 
-SELECT * FROM Funcionarios;
+SELECT * FROM Funcionario;
 
 SELECT `status` FROM Leitura;
 
@@ -111,9 +111,12 @@ SELECT * FROM Leitura;
 
 SELECT * FROM Livro_Emprestimo;
 
+
+
 SELECT * FROM Emprestimo;
 
 SELECT id_livro FROM Livros;
+SELECT * FROM Livros WHERE id_livro IN (11, 14, 17, 13, 20);
 
 
 DESCRIBE Leitores;
@@ -210,7 +213,7 @@ INSERT INTO Funcionarios(nome, cargo, data_contratacao, telefone, email) VALUES
 ('Leopoldo Piedade','Responsável pelo Acervo Digital','2021-11-30','987-546-122','leopoldopiedado80@gmail.com'),
 ('Fernanda Silva','Contadora','2016-05-22','923-768-549','fernandasilva@gmail.com');
 
--- Inserção tabela Leitors.
+-- Inserção tabela Leitores.
 INSERT INTO Leitores(nome, email, telefone, endereco, data_cadastro) VALUES
 ('Dinétria Lemos Camilo','dinetrialemos16@gmail.com','997-501-124','Condomínio Planalto do Kinu','2020-06-12'),
 ('Yani de Jesus','dejesus13@gmail.com','928-234-198','Kilamba','2020-03-19'),
@@ -222,21 +225,22 @@ INSERT INTO Leitores(nome, email, telefone, endereco, data_cadastro) VALUES
 -- INSERÇÃO TABELA LEITURA
 
 INSERT INTO Leitura(id_leitor, id_livro, id_funcionario, data_inicio, data_fim, status) VALUES
-('4','11','2','2024-11-02',NULL,'Em andamento'),
-('5','14','2','2024-10-04','2024-10-27','Concluída'),
-('1','17','2','2024-11-07',NULL,'Em andamento'),
-('5','13','2','2024-10-30',NULL,'Em andamento'),
-('3','20','2','2024-09-12',NULL,'Abandonada');
+('4','1','2','2024-11-02',NULL,'Em andamento'),
+('5','2','2','2024-10-04','2024-10-27','Concluída'),
+('1','3','2','2024-11-07',NULL,'Em andamento'),
+('5','4','2','2024-10-30',NULL,'Em andamento'),
+('3','5','2','2024-09-12',NULL,'Abandonada');
+
 
 -- inserção tabela Emprestimo
 
 INSERT INTO Emprestimo(ID_livro, ID_leitor, data_emprestimo, data_devolucao, Data_devolução_real, id_funcionario,  status) VALUES
-('12','6','2024-11-04','2024-12-24',NULL,'3','Emprestado'),
-('17','2','2024-10-16','2024-11-20',NULL,'2','Emprestado');
+('6','6','2024-11-04','2024-12-24',NULL,'3','Emprestado'),
+('7','2','2024-10-16','2024-11-20',NULL,'2','Emprestado');
 
 INSERT INTO Livro_Emprestimo(id_livro, id_emprestimo) VALUES
-('12','3'),
-('17','4');
+('9','3'),
+('10','4');
 
 -- Consultas INNER-JOIN
 
@@ -351,8 +355,93 @@ DELIMITER ;
 
 CALL InserirEmprestimo(3, 2, 1, '2024-11-30', '2024-12-15', 'Emprestado');
 
+--  Consultar livros disponíveis
+
+DELIMITER //
+
+CREATE PROCEDURE ConsultarLivrosDisponiveis()
+BEGIN
+    SELECT id_livro, titulo, autor, quantidade
+    FROM Livros
+    WHERE quantidade > 0;
+END //
+
+DELIMITER ;
+
+CALL ConsultarLivrosDisponiveis();
+
+-- Registrar o empréstimo de um livro
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS RegistrarEmprestimo;
 
 
 
+CREATE PROCEDURE RegistrarEmprestimo(
+    IN p_id_livro INT,
+    IN p_id_leitor INT,
+    IN p_data_emprestimo DATE,
+    IN p_data_devolucao DATE,
+    IN p_id_funcionario INT
+)
+BEGIN
+    -- Verificar se o livro está disponível (quantidade > 0)
+    IF (SELECT quantidade FROM Livros WHERE id_livro = p_id_livro) > 0 THEN
+        -- Inserir o registro na tabela Emprestimo
+        INSERT INTO Emprestimo (
+            id_livro, 
+            id_leitor, 
+            data_emprestimo, 
+            data_devolucao, 
+            id_funcionario
+        )
+        VALUES (
+            p_id_livro, 
+            p_id_leitor, 
+            p_data_emprestimo, 
+            p_data_devolucao, 
+            p_id_funcionario
+        );
+
+        -- Atualizar a quantidade do livro (reduzir em 1)
+        UPDATE Livros
+        SET quantidade = quantidade - 1
+        WHERE id_livro = p_id_livro;
+
+    ELSE
+        -- Lançar um erro personalizado se o livro não estiver disponível
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'O livro não está disponível para empréstimo.';
+    END IF;
+END //
+
+DELIMITER ;
+
+CALL RegistrarEmprestimo(2, 5, '2024-11-28', '2024-12-12', 1);
+
+
+-- Registrar a devolução de um livro
+
+DELIMITER //
+DROP PROCEDURE IF EXISTS RegistrarDevolucao;
+
+CREATE PROCEDURE RegistrarDevolucao(
+    IN p_id_emprestimo INT -- Renomeamos o parâmetro para evitar ambiguidade
+)
+BEGIN
+  
+    UPDATE emprestimo
+    SET data_devolucao = CURDATE()
+    WHERE id_emprestimo = p_id_emprestimo; 
+
+   
+    UPDATE Livros
+    SET quantidade = quantidade + 1
+    WHERE id_livro = (SELECT id_livro FROM emprestimo WHERE id_emprestimo = p_id_emprestimo);
+END //
+
+DELIMITER ;
+CALL RegistrarDevolucao(5);
 
 
