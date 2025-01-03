@@ -203,12 +203,16 @@ INSERT INTO Livros(titulo, autor, ano_publicacao, quantidade, isbn, id_categoria
 -- Inserção tabela
 
 INSERT INTO Funcionarios(nome, cargo, data_contratacao, telefone, email) VALUES
+('Carla Silva','Contadora','2018-05-27','923-728-899','carlasil12va@gmail.com'),
+('Raquel Dimane','Bibliotecária','2016-04-16','923-758-876','raqueldinmea@gmail.com'),
+('Luis Guilherme','Contador','2016-06-22','924-218-570','guilhermeluis123@gmail.com'),
 ('Hazaela Lemos','Bibliotecária Chefe','2018-02-12','923-504-399','hazaelaluisa@gmail.com'),
 ('Carla Camilo','Bibliotecária','2019-06-25','941-234-675','carla@camilo@gmail.com'),
 ('Igor Teixeira','Auxiliar de Biblioteca','2020-01-15','901-231-223','teixeiraigor@gmail.com'),
 ('Mateus Cazunga','Assistente de Processamento','2021-03-10','','mateus29cazunga2@gmail.com'),
 ('Leopoldo Piedade','Responsável pelo Acervo Digital','2021-11-30','987-546-122','leopoldopiedado80@gmail.com'),
 ('Fernanda Silva','Contadora','2016-05-22','923-768-549','fernandasilva@gmail.com');
+
 
 -- Inserção tabela Leitors.
 INSERT INTO Leitores(nome, email, telefone, endereco, data_cadastro) VALUES
@@ -378,12 +382,51 @@ FROM
 JOIN 
     Categoria C ON L.id_categoria = C.id_categoria;
 
+-- Visualizar os funcionários e suas atividades relacionadas a empréstimos.
+  
+CREATE VIEW Funcionarios_Atividades AS
+SELECT 
+    F.id_funcionario,
+    F.nome AS Funcionario,
+    COUNT(E.id_emprestimo) AS TotalEmprestimos
+FROM 
+    Funcionarios F
+LEFT JOIN 
+    Emprestimo E ON F.id_funcionario = E.id_funcionario
+GROUP BY 
+    F.id_funcionario, F.nome;
+
+-- Mostra todos os empréstimos em andamento
+
+CREATE VIEW Emprestimos_Atuais AS
+SELECT 
+    E.id_emprestimo,
+    L.titulo AS Livro,
+    LT.nome AS Leitor,
+    E.data_emprestimo,
+    E.data_devolucao,
+    E.status
+FROM 
+    Emprestimo E
+JOIN 
+    Livros L ON E.id_livro = L.id_livro
+JOIN 
+    Leitores LT ON E.id_leitor = LT.id_leitor
+WHERE 
+    E.status = 'Emprestado';
+
 
 -- Consultas Views 
 
 SELECT * FROM Leituras_Por_Leitor;
 
 SELECT * FROM Livros_Categorias;
+
+SELECT * FROM Funcionarios_Atividades;
+
+SELECT * FROM Emprestimos_Atuais;
+
+
 
 -- Consultas com Order By
 
@@ -397,6 +440,12 @@ SELECT id_leitor, nome, email, telefone, endereco, data_cadastro
 FROM Leitores
 ORDER BY nome ASC;
 
+-- consulta por ordem alfabetica Descendentes leitores
+SELECT id_livro, titulo, autor, ano_publicacao, quantidade, isbn
+FROM Livros
+ORDER BY titulo DESC;
+
+
 -- Consultas com like
 -- Buscar livros cujo título contém a palavra 'Vida'
 SELECT id_livro, titulo, autor, ano_publicacao, quantidade, isbn
@@ -409,10 +458,33 @@ FROM Leitores
 WHERE nome LIKE 'D%' ;
 
 
+-- Consultas com BETWEEN
+-- Lista de leitores cujo número id_leitor está entre 5 e 15, inclusivo.
+
+SELECT id_leitor, nome, telefone
+FROM Leitores
+WHERE id_leitor BETWEEN 5 AND 15;
+
+-- consulta com NOT IN
+-- Retorna todos os livros que não pertencem às categorias 2, 5, ou 9.
+
+SELECT id_livro, titulo, id_categoria
+FROM Livros
+WHERE id_categoria NOT IN (2, 5, 9);
+
+-- Exclui os funcionários com os IDs 1, 4, e 6.
+
+SELECT id_funcionario, nome, cargo
+FROM Funcionarios
+WHERE id_funcionario NOT IN (1, 4, 6);
 
 
+-- consulta com IN
+-- Retorna apenas os livros que pertencem às categorias 3, 7, ou 10.
 
-
+SELECT id_livro, titulo, id_categoria
+FROM Livros
+WHERE id_categoria IN (3, 7, 10);
 
 
 
